@@ -74,7 +74,7 @@ public class IDFCal {
 						addItemInDoc(docInstance.substring(start+1, end),termInDoc);	
 					}
 					
-					System.out.println("add item: "+docInstance.substring(start+1, end));
+//					System.out.println("add item: "+docInstance.substring(start+1, end));
 				}
 			}
 			refreshTermList(termInDoc);
@@ -103,18 +103,20 @@ public class IDFCal {
 					}
 					if(docInstance.substring(end, end+1).equals("/"))
 					{
-						String tmpTerm = docInstance.substring(start+1, end);
-						if(!filter.isFiltered(tmpTerm))
+						String tmpTermStr = docInstance.substring(start+1, end);
+						if(!filter.isFiltered(tmpTermStr))
 						{
-							int termIdx = termList.indexOf(tmpTerm);
-							System.out.print( tmpTerm + ":"
-									+ termList.get(termIdx).getTermFreq() * termList.get(termIdx).getIDF());
-//							bw.write(str);	
-						}
+							Term tmpTerm = getTerm(tmpTermStr);
+							int idx = termList.indexOf(tmpTerm);
+//							System.out.print( tmpTermStr + ":"
+//									+ termList.get(idx).getTermFreq() * termList.get(idx).getIDF());
+							bw.write(termList.get(idx).getTermFreq() * termList.get(idx).getIDF() + " ");	
+						} 
 						
 //						System.out.println("add item: "+docInstance.substring(start+1, end));
 					}
 				}
+				bw.newLine();
 			}
 			
 			bw.close();
@@ -123,6 +125,14 @@ public class IDFCal {
 		}
 	}
 	
+	private Term getTerm(String tmpTermStr) {
+		for (int i = 0; i < termList.size(); i++) {
+			if( tmpTermStr.equals(termList.get(i).getTerm()))
+				return termList.get(i);
+		}
+		return null;
+	}
+
 	private void refreshTermList(ArrayList<Term> termInDoc) {
 		for(int i=0;i<termInDoc.size();i++)
 		{
@@ -281,7 +291,6 @@ public class IDFCal {
 		
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static void main(String[] args)
 	{
 		
