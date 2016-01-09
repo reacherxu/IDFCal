@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * 对中文句子进行相似度计算，有计算句子权值、排序、两两句子之间的相似度计算
@@ -22,12 +22,17 @@ public class IDFCal {
 	WordFilter filter;
 	double docNum;
 	
+	/* 记录每篇文章的词频 */
+	ArrayList<ArrayList<Term>> termWithinDoc;
+	
 	public IDFCal()
 	{
 		dataFile = "data.txt";	
 		docs = new ArrayList<String>();
 		termList = new ArrayList<Term>();
 		filter = new WordFilter(); 
+		
+		termWithinDoc = new ArrayList<ArrayList<Term>>(); 
 	}
 	
 	/**
@@ -77,46 +82,34 @@ public class IDFCal {
 //					System.out.println("add item: "+docInstance.substring(start+1, end));
 				}
 			}
+			termWithinDoc.add(termInDoc);
 			refreshTermList(termInDoc);
 		}
 		setIDF();
-		printTermList();
+//		printTermList();
 		
 	}
 	
+	//TODO 1.词性  2.dict
 	public void word2Vec() {
 		try {
 			BufferedWriter bw=new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(new File("vector"))));
 			
-			String docInstance;
-			for(int i=0; i<docs.size();i++)
+			for(int i=0; i<docNum;i++)
 			{
-				docInstance = docs.get(i);
-				int start  = 0;
-				int end  = 0;
-				for(end=0; end<docInstance.length();end++)
-				{
-					if(docInstance.substring(end, end+1).equals(" "))
+				for (int j = 0; j < termWithinDoc.get(i).size(); j++) {
+					Term termDoc = termWithinDoc.get(i).get(j);
+					String tmpTermStr = termDoc.getTerm();
+					if(!filter.isFiltered(tmpTermStr))
 					{
-						start = end;
-					}
-					if(docInstance.substring(end, end+1).equals("/"))
-					{
-						String tmpTermStr = docInstance.substring(start+1, end);
-						if(!filter.isFiltered(tmpTermStr))
-						{
-							Term tmpTerm = getTerm(tmpTermStr);
-							int idx = termList.indexOf(tmpTerm);
-//							System.out.print( tmpTermStr + ":"
-//									+ termList.get(idx).getTermFreq() * termList.get(idx).getIDF());
-							bw.write(termList.get(idx).getTermFreq() * termList.get(idx).getIDF() + " ");	
-						} 
-						
-//						System.out.println("add item: "+docInstance.substring(start+1, end));
-					}
+						Term termAll = getTerm(tmpTermStr,termList);
+						System.out.print( tmpTermStr + ":"
+								+ termDoc.getTermFreq() +","+ termAll.getIDF());
+					} 
 				}
-				bw.newLine();
+				
+				System.out.println();
 			}
 			
 			bw.close();
@@ -125,10 +118,10 @@ public class IDFCal {
 		}
 	}
 	
-	private Term getTerm(String tmpTermStr) {
-		for (int i = 0; i < termList.size(); i++) {
-			if( tmpTermStr.equals(termList.get(i).getTerm()))
-				return termList.get(i);
+	private Term getTerm(String tmpTermStr,List<Term> list) {
+		for (int i = 0; i < list.size(); i++) {
+			if( tmpTermStr.equals(list.get(i).getTerm()))
+				return list.get(i);
 		}
 		return null;
 	}

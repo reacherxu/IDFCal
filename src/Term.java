@@ -1,7 +1,7 @@
 
 public class Term {
 	private String term;
-	private double termFreq;
+	private double termFreq;   //所有文档中含有该term的文档数目
 	private double idf;
 	public Term(String stringTerm)
 	{
