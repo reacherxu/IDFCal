@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * ¶ÔÖĞÎÄ¾ä×Ó½øĞĞÏàËÆ¶È¼ÆËã£¬ÓĞ¼ÆËã¾ä×ÓÈ¨Öµ¡¢ÅÅĞò¡¢Á½Á½¾ä×ÓÖ®¼äµÄÏàËÆ¶È¼ÆËã
- * ÎÊÌâÊÇÈ«²¿¼ÓÔØµ½ÄÚ´æ    ²»ÊÊºÏÌØ±ğ´óµÄÓïÁÏ
+ * å¯¹ä¸­æ–‡å¥å­è¿›è¡Œç›¸ä¼¼åº¦è®¡ç®—ï¼Œæœ‰è®¡ç®—å¥å­æƒå€¼ã€æ’åºã€ä¸¤ä¸¤å¥å­ä¹‹é—´çš„ç›¸ä¼¼åº¦è®¡ç®—
+ * é—®é¢˜æ˜¯å…¨éƒ¨åŠ è½½åˆ°å†…å­˜    ä¸é€‚åˆç‰¹åˆ«å¤§çš„è¯­æ–™
  * @author Reacher
  *
  */
@@ -27,8 +27,9 @@ public class IDFCal {
 	double docNum;
 	
 	Map<String,Integer> dic;
-	/* ¼ÇÂ¼Ã¿ÆªÎÄÕÂµÄ´ÊÆµ */
+	/* è®°å½•æ¯ç¯‡æ–‡ç« çš„è¯é¢‘ */
 	Map<ArrayList<Term>,Integer> termWithinDoc;
+	ArrayList<String> labels ;
 	
 	public IDFCal()
 	{
@@ -37,14 +38,15 @@ public class IDFCal {
 		termList = new ArrayList<Term>();
 		filter = new WordFilter(); 
 		
-		termWithinDoc = new LinkedHashMap<ArrayList<Term>,Integer>(); 
-		
 		dicFile = "dic/dic_chs.txt";
+		termWithinDoc = new LinkedHashMap<ArrayList<Term>,Integer>(); 
+		labels = new ArrayList<String>();
+		
 		loadDic();
 	}
 	
 	/**
-	 * ¼ÓÔØ´Êµä
+	 * åŠ è½½è¯å…¸
 	 */
 	private void loadDic() {
 		dic = new HashMap<String,Integer>();
@@ -65,7 +67,7 @@ public class IDFCal {
 	}
 
 	/**
-	 * 1ĞĞÎª1ÆªÎÄµµ
+	 * 1è¡Œä¸º1ç¯‡æ–‡æ¡£
 	 */
 	public void getDocs() 
 	{
@@ -74,7 +76,7 @@ public class IDFCal {
 			BufferedReader br=new BufferedReader(new InputStreamReader(new FileInputStream(new File(dataFile))));
 			while((docLine = br.readLine())!=null)
 			{
-				//XXX:È«²¿¼ÓÔØµ½ÄÚ´æ£¬²»ÊÊºÏÌØ±ğ´óµÄÓïÁÏ
+				//XXX:å…¨éƒ¨åŠ è½½åˆ°å†…å­˜ï¼Œä¸é€‚åˆç‰¹åˆ«å¤§çš„è¯­æ–™
 				docs.add(docLine);
 			}
 			
@@ -95,12 +97,14 @@ public class IDFCal {
 			docInstance = docs.get(i);
 			int start  = 0;
 			int end  = 0;
-			int count = 0;  //ÓÃÓÚ¼ÆËãÃ¿¸öÎÄ±¾º¬ÓĞµÄ´ÊµÄÊıÁ¿
+			int count = 0;  //ç”¨äºè®¡ç®—æ¯ä¸ªæ–‡æœ¬å«æœ‰çš„è¯çš„æ•°é‡
 			
 			for(end=0; end<docInstance.length();end++)
 			{
 				if(docInstance.substring(end, end+1).equals(" "))
 				{
+					if(start == 0)
+						labels.add(docInstance.substring(start, end));
 					start = end;
 				}
 				if(docInstance.substring(end, end+1).equals("/"))
@@ -125,12 +129,13 @@ public class IDFCal {
 		
 	}
 	
-	//TODO 1.´ÊĞÔ  
+	//TODO 1.è¯æ€§  
 	public void word2Vec() {
 		try {
 			BufferedWriter bw=new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(new File("vector"))));
 			
+			int i = 0;
 			for(Map.Entry<ArrayList<Term>,Integer> entry : termWithinDoc.entrySet() ) {
 				ArrayList<Term> curDoc = entry.getKey();
 				int allTermCount = entry.getValue();
@@ -142,13 +147,17 @@ public class IDFCal {
 					{
 						Term termAll = getTerm(tmpTermStr,termList);
 						
-						//XXX ¸Ä³ÉÊäÈëµ½ÎÄ¼şÖĞ
-						System.out.print( tmpTermStr + ":"
-								+ termDoc.getTermFreq() / allTermCount +","+ termAll.getIDF());
+						//å»é™¤å­—å…¸ä¸­æ²¡æœ‰çš„è¯è¯­
+						if(dic.get(tmpTermStr) == null)
+							continue;
+						else
+							bw.write(labels.get(i) + " " + dic.get(tmpTermStr) + ":" +
+								termDoc.getTermFreq() / allTermCount * termAll.getIDF());
 					} 
 				}
 				
-				System.out.println();
+				bw.newLine();
+				i++;
 			}
 			
 			bw.close();
@@ -169,7 +178,7 @@ public class IDFCal {
 		for(int i=0;i<termInDoc.size();i++)
 		{
 			Boolean isMatchedFound = false;
-			//Ë³Ğò²éÕÒ£¬Ğ´ÆğÀ´¼òµ¥£¬µ«ÊÇĞ§ÂÊµÍ
+			//é¡ºåºæŸ¥æ‰¾ï¼Œå†™èµ·æ¥ç®€å•ï¼Œä½†æ˜¯æ•ˆç‡ä½
 			for(int j=0;j<termList.size();j++)
 			{
 				if(termList.get(j).getTerm().equals(termInDoc.get(i).getTerm()))
@@ -192,7 +201,7 @@ public class IDFCal {
 		System.out.println("total terms :"+termList.size());
 		for(int i=0;i<termList.size();i++)
 		{
-			System.out.println(i+"th term£º" + termList.get(i).getTerm()+" "
+			System.out.println(i+"th termï¼š" + termList.get(i).getTerm()+" "
 					+termList.get(i).getTermFreq()+" "
 					+termList.get(i).getIDF());
 		}
@@ -331,21 +340,21 @@ public class IDFCal {
 		idfCal.getDocs();
 		idfCal.getTermList();
 		idfCal.word2Vec();
-		/*String doc1 ;//= "1 Ëû/r  ÔçÄê/t  Á¢Ö¾/v  ¾È¹ú/vn  £¬/w  ÔÚ/p  ÖĞÑ§/n  Ê±ÆÚ/n  ¾Í/d  ¿ªÊ¼/v  ×¢Òâ/v  ¾üÊÂ/n  ÎÊÌâ/n  ¡£/w";
-		String doc2 ;//= "1 Ëû/r  ÔçÄê/t  Á¢Ö¾/v  ¾È¹ú/vn  £¬/w  ÔÚ/p  ÖĞÑ§/n  Ê±ÆÚ/n  ¾Í/d  ¿ªÊ¼/v  ×¢Òâ/v  ¾üÊÂ/n  ÎÊÌâ/n  ¡£/w";
+		/*String doc1 ;//= "1 ä»–/r  æ—©å¹´/t  ç«‹å¿—/v  æ•‘å›½/vn  ï¼Œ/w  åœ¨/p  ä¸­å­¦/n  æ—¶æœŸ/n  å°±/d  å¼€å§‹/v  æ³¨æ„/v  å†›äº‹/n  é—®é¢˜/n  ã€‚/w";
+		String doc2 ;//= "1 ä»–/r  æ—©å¹´/t  ç«‹å¿—/v  æ•‘å›½/vn  ï¼Œ/w  åœ¨/p  ä¸­å­¦/n  æ—¶æœŸ/n  å°±/d  å¼€å§‹/v  æ³¨æ„/v  å†›äº‹/n  é—®é¢˜/n  ã€‚/w";
 		//doc2=idfCal.docs.get(idfCal.docs.size()-1);
 		doc2 = idfCal.docs.get(0);
 		ArrayList <DocItem> scoreList = new ArrayList<DocItem>();
 		for(int i=0;i<idfCal.docs.size();i++)
 		{
-			//System.out.print("µÚ"+i+"¸ö£º");
+			//System.out.print("ç¬¬"+i+"ä¸ªï¼š");
 			doc1 = idfCal.docs.get(i);
 			scoreList.add(new DocItem(doc1,idfCal.calSim(doc1,doc2)));			
 		}
 		Collections.sort(scoreList,new ScoreCompare()); 
 		for(int i=0;i<scoreList.size();i++)
 		{
-			System.out.println("µÚ"+i+"¸ö£º"+scoreList.get(i).score+" "+scoreList.get(i).doc);
+			System.out.println("ç¬¬"+i+"ä¸ªï¼š"+scoreList.get(i).score+" "+scoreList.get(i).doc);
 		}*/
 	}	
 }

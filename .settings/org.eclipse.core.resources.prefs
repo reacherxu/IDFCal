@@ -1,6 +1,6 @@
-#Mon Jan 11 17:16:22 CST 2016
+#Mon Jan 11 20:56:48 CST 2016
 eclipse.preferences.version=1
-encoding//dic/dic_chs.txt=GBK
-encoding/<project>=GBK
+encoding//dic/dic_chs.txt=UTF-8
+encoding/<project>=UTF-8
 encoding/README.md=UTF-8
-encoding/data.txt=GBK
+encoding/data.txt=UTF-8

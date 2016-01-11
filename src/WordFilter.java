@@ -1,5 +1,5 @@
 /**
- * ÓÃÓÚ¹ıÂË±êµãºÍÍ£ÓÃ´Ê
+ * ç”¨äºè¿‡æ»¤æ ‡ç‚¹å’Œåœç”¨è¯
  * @author Reacher
  *
  */
@@ -7,11 +7,11 @@ public class WordFilter {
 	public static String[] wordsSet ={";",
 			".",
 			",",
-			"£»",
-			"£¡",
-			"£¿",
-			"£¬",
-			"¡£"};
+			"ï¼›",
+			"ï¼",
+			"ï¼Ÿ",
+			"ï¼Œ",
+			"ã€‚"};
 	Boolean isFiltered(String word)
 	{
 		int i=0;

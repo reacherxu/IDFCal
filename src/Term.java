@@ -1,7 +1,7 @@
 
 public class Term {
 	private String term;
-	private double termFreq;   //ËùÓĞÎÄµµÖĞº¬ÓĞ¸ÃtermµÄÎÄµµÊıÄ¿
+	private double termFreq;   //æ‰€æœ‰æ–‡æ¡£ä¸­å«æœ‰è¯¥termçš„æ–‡æ¡£æ•°ç›®
 	private double idf;
 	public Term(String stringTerm)
 	{
