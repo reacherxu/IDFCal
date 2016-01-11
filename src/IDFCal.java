@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 对中文句子进行相似度计算，有计算句子权值、排序、两两句子之间的相似度计算
@@ -17,13 +20,15 @@ import java.util.List;
  */
 public class IDFCal {
 	String dataFile;
+	String dicFile;
 	ArrayList<String> docs;
 	ArrayList<Term> termList;
 	WordFilter filter;
 	double docNum;
 	
+	Map<String,Integer> dic;
 	/* 记录每篇文章的词频 */
-	ArrayList<ArrayList<Term>> termWithinDoc;
+	Map<ArrayList<Term>,Integer> termWithinDoc;
 	
 	public IDFCal()
 	{
@@ -32,9 +37,33 @@ public class IDFCal {
 		termList = new ArrayList<Term>();
 		filter = new WordFilter(); 
 		
-		termWithinDoc = new ArrayList<ArrayList<Term>>(); 
+		termWithinDoc = new LinkedHashMap<ArrayList<Term>,Integer>(); 
+		
+		dicFile = "dic/dic_chs.txt";
+		loadDic();
 	}
 	
+	/**
+	 * 加载词典
+	 */
+	private void loadDic() {
+		dic = new HashMap<String,Integer>();
+		
+		String docLine;
+		int count = 1;
+		try {
+			BufferedReader br=new BufferedReader(new InputStreamReader(new FileInputStream(new File(dicFile))));
+			while((docLine = br.readLine())!=null)
+			{
+				dic.put(docLine,count++);
+			}
+			
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} 
+	}
+
 	/**
 	 * 1行为1篇文档
 	 */
@@ -66,6 +95,8 @@ public class IDFCal {
 			docInstance = docs.get(i);
 			int start  = 0;
 			int end  = 0;
+			int count = 0;  //用于计算每个文本含有的词的数量
+			
 			for(end=0; end<docInstance.length();end++)
 			{
 				if(docInstance.substring(end, end+1).equals(" "))
@@ -74,15 +105,19 @@ public class IDFCal {
 				}
 				if(docInstance.substring(end, end+1).equals("/"))
 				{
-					if(!filter.isFiltered(docInstance.substring(start+1, end)))
+					String tmp = docInstance.substring(start+1, end);
+					if(!filter.isFiltered(tmp))
 					{
-						addItemInDoc(docInstance.substring(start+1, end),termInDoc);	
+//						if( !dic.contains(tmp) )
+//							System.out.println("not contains: " + tmp);
+						count++;
+						addItemInDoc(tmp,termInDoc);	
 					}
 					
 //					System.out.println("add item: "+docInstance.substring(start+1, end));
 				}
 			}
-			termWithinDoc.add(termInDoc);
+			termWithinDoc.put(termInDoc,count);
 			refreshTermList(termInDoc);
 		}
 		setIDF();
@@ -90,22 +125,26 @@ public class IDFCal {
 		
 	}
 	
-	//TODO 1.词性  2.dict
+	//TODO 1.词性  
 	public void word2Vec() {
 		try {
 			BufferedWriter bw=new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(new File("vector"))));
 			
-			for(int i=0; i<docNum;i++)
-			{
-				for (int j = 0; j < termWithinDoc.get(i).size(); j++) {
-					Term termDoc = termWithinDoc.get(i).get(j);
+			for(Map.Entry<ArrayList<Term>,Integer> entry : termWithinDoc.entrySet() ) {
+				ArrayList<Term> curDoc = entry.getKey();
+				int allTermCount = entry.getValue();
+				
+				for (int j = 0; j < curDoc.size(); j++) {
+					Term termDoc = curDoc.get(j);
 					String tmpTermStr = termDoc.getTerm();
 					if(!filter.isFiltered(tmpTermStr))
 					{
 						Term termAll = getTerm(tmpTermStr,termList);
+						
+						//XXX 改成输入到文件中
 						System.out.print( tmpTermStr + ":"
-								+ termDoc.getTermFreq() +","+ termAll.getIDF());
+								+ termDoc.getTermFreq() / allTermCount +","+ termAll.getIDF());
 					} 
 				}
 				
@@ -286,6 +325,7 @@ public class IDFCal {
 	
 	public static void main(String[] args)
 	{
+		
 		
 		IDFCal idfCal = new IDFCal();
 		idfCal.getDocs();
